@@ -58,11 +58,19 @@ const updateBookingStatus = async (bookingId, status) => {
 const getBookingsByPhone = async (phone) => {
   const query = `
     SELECT 
-      b.*,
+      b.id,
+      b.fullname,
+      b.phone,
+      b.email,
+      b.roomId,
+      b.date,
+      b.start_time,
+      b.end_time,
+      b.status,
+      r.id AS room_id,
       r."roomName" as room_name,
       r.capacity as room_capacity,
       r.location as room_floor,
-      b.status,
       ARRAY_AGG(DISTINCT e.name) FILTER (WHERE e.name IS NOT NULL) as equipment_names
     FROM 
       bookings b
@@ -75,14 +83,27 @@ const getBookingsByPhone = async (phone) => {
     WHERE 
       b.phone = $1
     GROUP BY 
-      b.id, r.id, r."roomName", r.capacity, r.location
+      b.id, 
+      b.fullname, 
+      b.phone, 
+      b.email, 
+      b.roomId, 
+      b.date, 
+      b.start_time, 
+      b.end_time, 
+      b.status, 
+      r.id, 
+      r."roomName", 
+      r.capacity, 
+      r.location
     ORDER BY 
       b.date DESC, b.start_time DESC
   `;
-  
+
   const result = await pool.query(query, [phone]);
   return result.rows;
 };
+
 
 // ดึงข้อมูลการจองตาม ID
 const getBookingById = async (id) => {
