@@ -3,27 +3,39 @@ const pool = require("../config/db");
 // ดึงข้อมูลการจองทั้งหมด
 const getAllBookings = async () => {
   const query = `
-    SELECT 
-      b.*,
-      r."roomName" as room_name,
-      r.capacity as room_capacity,
-      r.location as room_floor,
-      b.status,
-      ARRAY_AGG(DISTINCT e.name) FILTER (WHERE e.name IS NOT NULL) as equipment_names
-    FROM 
-      bookings b
-    LEFT JOIN 
-      rooms r ON b.roomId = r.id
-    LEFT JOIN 
-      booking_equipments be ON b.id = be.booking_id
-    LEFT JOIN 
-      equipments e ON be.equipment_id = e.id
-    GROUP BY 
-      b.id, r.id, r."roomName", r.capacity, r.location
-    ORDER BY 
-      b.date DESC, b.start_time DESC
+      SELECT 
+          b.id, 
+          b.fullname, 
+          b.phone, 
+          b.email,
+          b.date, 
+          b.start_time, 
+          b.end_time, 
+          b.status, 
+          r.id AS room_id, 
+          r."roomName" AS room_name, 
+          r.capacity AS room_capacity, 
+          r.location AS room_floor, 
+          ARRAY_AGG(DISTINCT COALESCE(e.name, '')) AS equipment_names
+      FROM bookings b
+      LEFT JOIN rooms r ON b.roomId = r.id
+      LEFT JOIN booking_equipments be ON be.booking_id = b.id
+      LEFT JOIN equipments e ON be.equipment_id = e.id AND e.name IS NOT NULL
+      GROUP BY 
+          b.id, 
+          b.fullname, 
+          b.phone, 
+          b.email, 
+          b.date, 
+          b.start_time, 
+          b.end_time, 
+          b.status, 
+          r.id, 
+          r."roomName", 
+          r.capacity, 
+          r.location
+      ORDER BY b.date DESC, b.start_time ASC;
   `;
-  
   const result = await pool.query(query);
   return result.rows;
 };
