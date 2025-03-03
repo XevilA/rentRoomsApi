@@ -1,0 +1,36 @@
+version: '3.8'  # กำหนดเวอร์ชันของ Docker Compose ที่ใช้
+
+services:
+  # บริการที่ 1: PostgreSQL Database
+  postgres:
+    image: postgres:latest  # ดึง image PostgreSQL เวอร์ชันล่าสุดจาก Docker Hub
+    container_name: postgres_container  # ตั้งชื่อ container เป็น postgres_container
+    ports:
+      - "5432:5432"  # แมปพอร์ต 5432 ของเครื่อง host ไปยัง container
+    environment:  # ตัวแปร environment สำหรับการตั้งค่า PostgreSQL
+      POSTGRES_USER: postgres  # ชื่อ user สำหรับเชื่อมต่อฐานข้อมูล
+      POSTGRES_PASSWORD: root  # รหัสผ่านของ user postgres
+      POSTGRES_DB: roomdb  # ชื่อฐานข้อมูลเริ่มต้นที่จะสร้าง
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # เก็บข้อมูลถาวรใน volume เพื่อไม่ให้หายเมื่อ container หยุดทำงาน
+
+  # บริการที่ 2: Node.js API Server
+  api:
+    build: .  # สร้าง image โดยใช้ Dockerfile ในโฟลเดอร์ปัจจุบัน
+    container_name: node_api  # ตั้งชื่อ container เป็น node_api
+    ports:
+      - "3001:3001"  # แมปพอร์ต 3001 ของเครื่อง host ไปยัง container เพื่อให้สามารถเข้าถึง API ได้
+    environment:  # ตัวแปร environment สำหรับเชื่อมต่อกับฐานข้อมูล
+      DB_USER: postgres  # ชื่อ user ของฐานข้อมูล (ต้องตรงกับที่กำหนดใน postgres)
+      DB_PASSWORD: root  # รหัสผ่านสำหรับเชื่อมต่อฐานข้อมูล
+      DB_HOST: postgres  # ชื่อ host ที่ชี้ไปยังบริการ postgres (Docker Network)
+      DB_PORT: 5432  # พอร์ตที่ใช้เชื่อมต่อกับ PostgreSQL
+      DB_NAME: roomdb  # ชื่อฐานข้อมูลที่จะใช้งาน
+    depends_on:
+      - postgres  # รอให้ service postgres พร้อมก่อนที่จะรัน node_api
+    volumes:
+      - .:/usr/src/app  # แชร์โค้ดโปรเจกต์ปัจจุบันเข้าไปใน container
+    command: npm run dev  # เริ่มเซิร์ฟเวอร์ Node.js ในโหมด development
+
+volumes:
+  postgres_data:  # สร้าง volume สำหรับเก็บข้อมูลถาวรของ PostgreSQL
