@@ -109,24 +109,48 @@ const getBookingsByPhone = async (phone) => {
 const getBookingById = async (id) => {
   const query = `
     SELECT 
-      b.*,
-      r."roomName" as room_name,
-      r.capacity as room_capacity,
-      r.location as room_floor,
-      ARRAY_AGG(DISTINCT e.name) FILTER (WHERE e.name IS NOT NULL) as equipment_names,
-      ARRAY_AGG(DISTINCT e.id) FILTER (WHERE e.id IS NOT NULL) as equipment_ids
-    FROM 
-      bookings b
-    LEFT JOIN 
-      rooms r ON b.id = r.id
-    LEFT JOIN 
-      booking_equipments be ON b.id = be.booking_id
-    LEFT JOIN 
-      equipments e ON be.equipment_id = e.id
-    WHERE 
-      b.id = $1
-    GROUP BY 
-      b.id, r.id, r."roomName", r.capacity, r.location
+  b.id,
+  b.fullname,
+  b.email,
+  b.date, 
+  b.phone,
+  b.roomid,
+  b.date AS booking_date, 
+  b.start_time,
+  b.end_time,
+  b.status,
+  b.approve_date,
+  r."roomName" as room_name,
+  r.capacity as room_capacity,
+  r.location as room_floor,
+  ARRAY_AGG(DISTINCT e.name) FILTER (WHERE e.name IS NOT NULL) as equipment_names,
+  ARRAY_AGG(DISTINCT e.id) FILTER (WHERE e.id IS NOT NULL) as equipment_ids
+FROM 
+  bookings b
+LEFT JOIN 
+  rooms r ON b.roomid = r.id
+LEFT JOIN 
+  booking_equipments be ON b.id = be.booking_id
+LEFT JOIN 
+  equipments e ON be.equipment_id = e.id
+WHERE 
+  b.id = $1
+GROUP BY 
+  b.id, 
+  b.fullname, 
+  b.email, 
+  b.date,
+  b.phone,
+  b.roomid, 
+  b.date,  
+  b.start_time, 
+  b.end_time, 
+  b.status, 
+  b.approve_date,
+  r.id, 
+  r."roomName", 
+  r.capacity, 
+  r.location;
   `;
 
   const result = await pool.query(query, [id]);
